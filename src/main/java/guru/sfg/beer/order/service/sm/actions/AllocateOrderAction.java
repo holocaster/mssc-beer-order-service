@@ -1,6 +1,6 @@
 package guru.sfg.beer.order.service.sm.actions;
 
-import br.com.prcompany.beerevents.events.ValidateBeerOrderRequest;
+import br.com.prcompany.beerevents.events.AllocateOrderRequest;
 import br.com.prcompany.beerevents.model.enums.BeerOrderEventEnum;
 import br.com.prcompany.beerevents.model.enums.BeerOrderStatusEnum;
 import br.com.prcompany.beerevents.utils.EventsConstants;
@@ -20,7 +20,7 @@ import java.util.UUID;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class ValidateOrderAction implements Action<BeerOrderStatusEnum, BeerOrderEventEnum> {
+public class AllocateOrderAction implements Action<BeerOrderStatusEnum, BeerOrderEventEnum> {
 
     private final JmsTemplate jmsTemplate;
     private final BeerOrderRepository beerOrderRepository;
@@ -28,12 +28,14 @@ public class ValidateOrderAction implements Action<BeerOrderStatusEnum, BeerOrde
 
     @Override
     public void execute(StateContext<BeerOrderStatusEnum, BeerOrderEventEnum> context) {
-        log.debug("Validate order was called");
+        log.debug("Allocate order was called");
 
         String id = (String) context.getMessageHeader(BeerOrderManagerImpl.ORDER_ID_HEADER);
 
-        log.debug("Sending validation as jms message for {}", id);
+        log.debug("Sending allocation as jms message for {}", id);
         BeerOrder beerOrder = this.beerOrderRepository.getOne(UUID.fromString(id));
-        this.jmsTemplate.convertAndSend(EventsConstants.VALIDATE_ORDER_QUEUE, ValidateBeerOrderRequest.builder().beerOrderDTO(this.beerOrderMapper.beerOrderToEventDto(beerOrder)).build());
+
+        this.jmsTemplate.convertAndSend(EventsConstants.ALLOCATE_ORDER_QUEUE, AllocateOrderRequest.builder()
+                .beerOrderDTO(this.beerOrderMapper.beerOrderToEventDto(beerOrder)).build());
     }
 }
