@@ -16,7 +16,7 @@
  */
 package guru.sfg.beer.order.service.domain;
 
-import guru.sfg.beer.order.service.domain.enums.BeerOrderStatusEnum;
+import br.com.prcompany.beerevents.model.enums.BeerOrderStatusEnum;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

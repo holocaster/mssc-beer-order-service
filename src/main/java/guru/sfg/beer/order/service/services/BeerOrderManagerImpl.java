@@ -1,8 +1,8 @@
 package guru.sfg.beer.order.service.services;
 
+import br.com.prcompany.beerevents.model.enums.BeerOrderEventEnum;
+import br.com.prcompany.beerevents.model.enums.BeerOrderStatusEnum;
 import guru.sfg.beer.order.service.domain.BeerOrder;
-import guru.sfg.beer.order.service.domain.enums.BeerOrderEventEnum;
-import guru.sfg.beer.order.service.domain.enums.BeerOrderStatusEnum;
 import guru.sfg.beer.order.service.repositories.BeerOrderRepository;
 import guru.sfg.beer.order.service.sm.BeerOrderStateChangeInterceptor;
 import lombok.RequiredArgsConstructor;

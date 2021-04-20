@@ -1,8 +1,0 @@
-package guru.sfg.beer.order.service.domain.enums;
-
-public enum BeerOrderEventEnum {
-    VALIDATION_PASSED, VALIDATION_FAILED, VALIDATE_ORDER, ALLOCATED_ORDER,
-    ALLOCATION_SUCCESS, ALLOCATION_NO_INVENTORY, ALLOCATION_FAILED,
-    BEER_ORDER_PICKED_UP
-
-}

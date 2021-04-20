@@ -17,9 +17,9 @@
 
 package guru.sfg.beer.order.service.web.model;
 
+import br.com.prcompany.beerevents.model.enums.BeerOrderStatusEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import guru.sfg.beer.order.service.domain.enums.BeerOrderStatusEnum;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
