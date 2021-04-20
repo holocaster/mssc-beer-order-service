@@ -1,5 +1,6 @@
 package guru.sfg.beer.order.service.services;
 
+import br.com.prcompany.beerevents.model.BeerOrderDTO;
 import br.com.prcompany.beerevents.model.enums.BeerOrderEventEnum;
 import br.com.prcompany.beerevents.model.enums.BeerOrderStatusEnum;
 import guru.sfg.beer.order.service.domain.BeerOrder;
@@ -47,6 +48,29 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
         } else {
             this.sendEvent(beerOrder, BeerOrderEventEnum.VALIDATION_FAILED);
         }
+    }
+
+    @Override
+    public void beerOrderAllocation(BeerOrderDTO beerOrderDTO, BeerOrderEventEnum beerOrderEventEnum) {
+        BeerOrder beerOrder = this.beerOrderRepository.getOne(beerOrderDTO.getId());
+        this.sendEvent(beerOrder, beerOrderEventEnum);
+        if (beerOrderEventEnum != BeerOrderEventEnum.ALLOCATION_FAILED) {
+            this.updateAllocatedQty(beerOrderDTO);
+        }
+    }
+
+    private void updateAllocatedQty(BeerOrderDTO beerOrderDTO) {
+        BeerOrder allocatedOrder = beerOrderRepository.getOne(beerOrderDTO.getId());
+
+        allocatedOrder.getBeerOrderLines().forEach(beerOrderLine -> {
+            beerOrderDTO.getBeerOrderLines().forEach(beerOrderLineDto -> {
+                if (beerOrderLine.getId().equals(beerOrderLineDto.getId())) {
+                    beerOrderLine.setQuantityAllocated(beerOrderLineDto.getQuantityAllocated());
+                }
+            });
+        });
+
+        beerOrderRepository.saveAndFlush(allocatedOrder);
     }
 
     private void sendEvent(BeerOrder beerOrder, BeerOrderEventEnum beerOrderEventEnum) {
