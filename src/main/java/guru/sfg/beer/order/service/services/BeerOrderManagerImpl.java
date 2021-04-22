@@ -7,6 +7,7 @@ import guru.sfg.beer.order.service.domain.BeerOrder;
 import guru.sfg.beer.order.service.repositories.BeerOrderRepository;
 import guru.sfg.beer.order.service.sm.BeerOrderStateChangeInterceptor;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.statemachine.StateMachine;
@@ -15,8 +16,10 @@ import org.springframework.statemachine.support.DefaultStateMachineContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
 import java.util.UUID;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class BeerOrderManagerImpl implements BeerOrderManager {
@@ -32,24 +35,29 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
     public BeerOrder newBeerOrder(BeerOrder beerOrder) {
         beerOrder.setId(null);
         beerOrder.setOrderStatus(BeerOrderStatusEnum.NEW);
-        BeerOrder savedBeerOrder = this.beerOrderRepository.save(beerOrder);
+        BeerOrder savedBeerOrder = this.beerOrderRepository.saveAndFlush(beerOrder);
 
         this.sendEvent(savedBeerOrder, BeerOrderEventEnum.VALIDATE_ORDER);
         return savedBeerOrder;
     }
 
+    @Transactional
     @Override
     public void processValidationResult(UUID beerOrderId, Boolean isValid) {
-        BeerOrder beerOrder = this.beerOrderRepository.getOne(beerOrderId);
-        if (isValid) {
-            this.sendEvent(beerOrder, BeerOrderEventEnum.VALIDATION_PASSED);
-            BeerOrder validateBeerOrder = this.beerOrderRepository.findOneById(beerOrderId);
-            this.sendEvent(validateBeerOrder, BeerOrderEventEnum.ALLOCATE_ORDER);
-        } else {
-            this.sendEvent(beerOrder, BeerOrderEventEnum.VALIDATION_FAILED);
-        }
+        Optional<BeerOrder> beerOrderOptional = this.beerOrderRepository.findById(beerOrderId);
+        beerOrderOptional.ifPresentOrElse(beerOrder -> {
+            if (isValid) {
+                this.sendEvent(beerOrder, BeerOrderEventEnum.VALIDATION_PASSED);
+                BeerOrder validateBeerOrder = this.beerOrderRepository.findById(beerOrderId).get();
+                this.sendEvent(validateBeerOrder, BeerOrderEventEnum.ALLOCATE_ORDER);
+            } else {
+                this.sendEvent(beerOrder, BeerOrderEventEnum.VALIDATION_FAILED);
+            }
+
+        }, () -> log.error("Order not found for id {}", beerOrderId));
     }
 
+    @Transactional
     @Override
     public void beerOrderAllocation(BeerOrderDTO beerOrderDTO, BeerOrderEventEnum beerOrderEventEnum) {
         BeerOrder beerOrder = this.beerOrderRepository.getOne(beerOrderDTO.getId());
@@ -76,7 +84,7 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
     private void sendEvent(BeerOrder beerOrder, BeerOrderEventEnum beerOrderEventEnum) {
         StateMachine<BeerOrderStatusEnum, BeerOrderEventEnum> sm = this.build(beerOrder);
 
-        Message msg = MessageBuilder.withPayload(beerOrder)
+        Message msg = MessageBuilder.withPayload(beerOrderEventEnum)
                 .setHeader(ORDER_ID_HEADER, beerOrder.getId().toString())
                 .build();
         sm.sendEvent(msg);
