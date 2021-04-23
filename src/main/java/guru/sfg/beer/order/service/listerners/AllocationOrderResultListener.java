@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class AllocationOrderResultListener {
 
-    private BeerOrderManager beerOrderManager;
+    private final BeerOrderManager beerOrderManager;
 
     @JmsListener(destination = EventsConstants.ALLOCATE_ORDER_RESULT_QUEUE)
     public void listen(@Payload AllocateOrderResult result) {

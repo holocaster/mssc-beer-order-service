@@ -21,7 +21,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -29,6 +28,7 @@ import java.util.UUID;
 
 import static com.github.jenspiegsa.wiremockextension.ManagedWireMockServer.with;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+import static org.awaitility.Awaitility.await;
 
 @ExtendWith(WireMockExtension.class)
 @SpringBootTest
@@ -63,7 +63,6 @@ public class BeerOrderManagerImplIT {
                 .build());
     }
 
-    @Transactional
     @Test
     void testNewToAllocated() throws JsonProcessingException, InterruptedException {
         BeerDTO beerDTO = BeerDTO.builder().id(beerID).upc("12345").build();
@@ -76,7 +75,16 @@ public class BeerOrderManagerImplIT {
 
         BeerOrder savedBeerOrder = this.beerOrderManager.newBeerOrder(beerOrder);
 
-        Thread.sleep(5000);
+        await().untilAsserted(() -> {
+            BeerOrder foundOrder = this.beerOrderRepository.findById(beerOrder.getId()).get();
+            Assertions.assertEquals(BeerOrderStatusEnum.ALLOCATED, foundOrder.getOrderStatus());
+        });
+
+        await().untilAsserted(() -> {
+            BeerOrder foundOrder = this.beerOrderRepository.findById(beerOrder.getId()).get();
+            BeerOrderLine line = foundOrder.getBeerOrderLines().iterator().next();
+            Assertions.assertEquals(line.getOrderQuantity(), line.getQuantityAllocated());
+        });
 
         savedBeerOrder = this.beerOrderRepository.findById(savedBeerOrder.getId()).get();
 
