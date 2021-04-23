@@ -67,6 +67,15 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
         }
     }
 
+    @Override
+    public void beerOrderPickedUp(UUID id) {
+        Optional<BeerOrder> beerOrderOptional = this.beerOrderRepository.findById(id);
+
+        beerOrderOptional.ifPresentOrElse(beerOrder -> {
+            this.sendEvent(beerOrder, BeerOrderEventEnum.BEER_ORDER_PICKED_UP);
+        }, () -> log.error("Order not found for id {}", id));
+    }
+
     private void updateAllocatedQty(BeerOrderDTO beerOrderDTO) {
         BeerOrder allocatedOrder = beerOrderRepository.getOne(beerOrderDTO.getId());
 

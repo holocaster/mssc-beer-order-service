@@ -64,9 +64,8 @@ public class BeerOrderManagerImplIT {
     }
 
     @Test
-    void testNewToAllocated() throws JsonProcessingException, InterruptedException {
+    void testNewToAllocated() throws JsonProcessingException {
         BeerDTO beerDTO = BeerDTO.builder().id(beerID).upc("12345").build();
-        //BeerPagedList list = new BeerPagedList(Arrays.asList(beerDTO));
 
         this.wireMockServer.stubFor(WireMock.get(this.beerUpcPathV1).willReturn(
                 WireMock.okJson(this.objectMapper.writeValueAsString(beerDTO))));
@@ -90,6 +89,35 @@ public class BeerOrderManagerImplIT {
 
         Assertions.assertNotNull(savedBeerOrder);
         Assertions.assertEquals(BeerOrderStatusEnum.ALLOCATED, savedBeerOrder.getOrderStatus());
+    }
+
+    @Test
+    void testNewToPickedUp() throws JsonProcessingException {
+        BeerDTO beerDTO = BeerDTO.builder().id(beerID).upc("12345").build();
+
+        this.wireMockServer.stubFor(WireMock.get(this.beerUpcPathV1).willReturn(
+                WireMock.okJson(this.objectMapper.writeValueAsString(beerDTO))));
+
+        BeerOrder beerOrder = this.createBeerOrder();
+
+        BeerOrder savedBeerOrder = this.beerOrderManager.newBeerOrder(beerOrder);
+
+        await().untilAsserted(() -> {
+            BeerOrder foundOrder = this.beerOrderRepository.findById(beerOrder.getId()).get();
+            Assertions.assertEquals(BeerOrderStatusEnum.ALLOCATED, foundOrder.getOrderStatus());
+        });
+
+        this.beerOrderManager.beerOrderPickedUp(savedBeerOrder.getId());
+
+        await().untilAsserted(() -> {
+            BeerOrder foundOrder = this.beerOrderRepository.findById(beerOrder.getId()).get();
+            Assertions.assertEquals(BeerOrderStatusEnum.PICKED_UP, foundOrder.getOrderStatus());
+        });
+
+        BeerOrder pickedUpOrder = this.beerOrderRepository.findById(beerOrder.getId()).get();
+
+        Assertions.assertNotNull(pickedUpOrder);
+        Assertions.assertEquals(BeerOrderStatusEnum.PICKED_UP, pickedUpOrder.getOrderStatus());
     }
 
     public BeerOrder createBeerOrder() {
