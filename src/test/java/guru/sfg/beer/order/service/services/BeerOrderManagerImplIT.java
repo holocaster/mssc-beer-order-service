@@ -34,6 +34,8 @@ import static org.awaitility.Awaitility.await;
 @SpringBootTest
 public class BeerOrderManagerImplIT {
 
+    public static final String FAIL_VALIDATION = "fail-validation";
+
     @Autowired
     BeerOrderManager beerOrderManager;
 
@@ -61,6 +63,30 @@ public class BeerOrderManagerImplIT {
         this.testCustomer = this.customerRepository.save(Customer.builder()
                 .customerName("Test Customer")
                 .build());
+    }
+
+    @Test
+    void testFailedValidation() throws JsonProcessingException {
+        BeerDTO beerDTO = BeerDTO.builder().id(beerID).upc("12345").build();
+
+        this.wireMockServer.stubFor(WireMock.get(this.beerUpcPathV1).willReturn(
+                WireMock.okJson(this.objectMapper.writeValueAsString(beerDTO))));
+
+        BeerOrder beerOrder = this.createBeerOrder();
+        beerOrder.setCustomerRef(FAIL_VALIDATION);
+
+        BeerOrder savedBeerOrder = this.beerOrderManager.newBeerOrder(beerOrder);
+
+
+        await().untilAsserted(() -> {
+            BeerOrder foundOrder = this.beerOrderRepository.findById(beerOrder.getId()).get();
+            Assertions.assertEquals(BeerOrderStatusEnum.VALIDATION_EXCEPTION, foundOrder.getOrderStatus());
+        });
+
+        savedBeerOrder = this.beerOrderRepository.findById(savedBeerOrder.getId()).get();
+
+        Assertions.assertNotNull(savedBeerOrder);
+        Assertions.assertEquals(BeerOrderStatusEnum.VALIDATION_EXCEPTION, savedBeerOrder.getOrderStatus());
     }
 
     @Test
