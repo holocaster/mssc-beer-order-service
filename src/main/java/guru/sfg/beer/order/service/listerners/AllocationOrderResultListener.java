@@ -2,6 +2,7 @@ package guru.sfg.beer.order.service.listerners;
 
 import br.com.prcompany.beerevents.events.AllocateOrderResult;
 import br.com.prcompany.beerevents.model.enums.BeerOrderEventEnum;
+import br.com.prcompany.beerevents.model.enums.BeerOrderStatusEnum;
 import br.com.prcompany.beerevents.utils.EventsConstants;
 import guru.sfg.beer.order.service.services.BeerOrderManager;
 import lombok.RequiredArgsConstructor;
@@ -21,13 +22,13 @@ public class AllocationOrderResultListener {
     public void listen(@Payload AllocateOrderResult result) {
         if (!result.isAllocationError() && !result.isPendingInventory()) {
             //allocated normally
-            this.beerOrderManager.beerOrderAllocation(result.getBeerOrderDTO(), BeerOrderEventEnum.ALLOCATION_SUCCESS);
+            this.beerOrderManager.beerOrderAllocation(result.getBeerOrderDTO(), BeerOrderEventEnum.ALLOCATION_SUCCESS, BeerOrderStatusEnum.ALLOCATED);
         } else if (!result.isAllocationError() && result.isPendingInventory()) {
             //pending inventory
-            this.beerOrderManager.beerOrderAllocation(result.getBeerOrderDTO(), BeerOrderEventEnum.ALLOCATION_NO_INVENTORY);
+            this.beerOrderManager.beerOrderAllocation(result.getBeerOrderDTO(), BeerOrderEventEnum.ALLOCATION_NO_INVENTORY, BeerOrderStatusEnum.PENDING_INVENTORY);
         } else if (result.isAllocationError()) {
             //allocation error
-            this.beerOrderManager.beerOrderAllocation(result.getBeerOrderDTO(), BeerOrderEventEnum.ALLOCATION_FAILED);
+            this.beerOrderManager.beerOrderAllocation(result.getBeerOrderDTO(), BeerOrderEventEnum.ALLOCATION_FAILED, null);
         }
     }
 }
