@@ -3,6 +3,7 @@ package guru.sfg.beer.order.service.sm;
 import br.com.prcompany.beerevents.model.enums.BeerOrderEventEnum;
 import br.com.prcompany.beerevents.model.enums.BeerOrderStatusEnum;
 import guru.sfg.beer.order.service.sm.actions.AllocateOrderAction;
+import guru.sfg.beer.order.service.sm.actions.AllocationFailureAction;
 import guru.sfg.beer.order.service.sm.actions.ValidateOrderAction;
 import guru.sfg.beer.order.service.sm.actions.ValidationFailureAction;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,9 @@ public class BeerOrderStateMachineConfig extends StateMachineConfigurerAdapter<B
     @Autowired
     private ValidationFailureAction validationFailureAction;
 
+    @Autowired
+    private AllocationFailureAction allocationFailureAction;
+
     @Override
     public void configure(StateMachineStateConfigurer<BeerOrderStatusEnum, BeerOrderEventEnum> states) throws Exception {
         states.withStates().
@@ -54,7 +58,7 @@ public class BeerOrderStateMachineConfig extends StateMachineConfigurerAdapter<B
                 .and().withExternal()
                 .source(BeerOrderStatusEnum.ALLOCATION_PENDING).target(BeerOrderStatusEnum.ALLOCATED).event(BeerOrderEventEnum.ALLOCATION_SUCCESS)
                 .and().withExternal()
-                .source(BeerOrderStatusEnum.ALLOCATION_PENDING).target(BeerOrderStatusEnum.ALLOCATION_EXCEPTION).event(BeerOrderEventEnum.ALLOCATION_FAILED)
+                .source(BeerOrderStatusEnum.ALLOCATION_PENDING).target(BeerOrderStatusEnum.ALLOCATION_EXCEPTION).event(BeerOrderEventEnum.ALLOCATION_FAILED).action(this.allocationFailureAction)
                 .and().withExternal()
                 .source(BeerOrderStatusEnum.ALLOCATION_PENDING).target(BeerOrderStatusEnum.PENDING_INVENTORY).event(BeerOrderEventEnum.ALLOCATION_NO_INVENTORY)
                 .and().withExternal()

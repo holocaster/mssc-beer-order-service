@@ -22,7 +22,7 @@ public class AllocationOrderResultListener {
         if (!result.isAllocationError() && !result.isPendingInventory()) {
             //allocated normally
             this.beerOrderManager.beerOrderAllocation(result.getBeerOrderDTO(), BeerOrderEventEnum.ALLOCATION_SUCCESS);
-        } else if (!result.isPendingInventory() && result.isPendingInventory()) {
+        } else if (!result.isAllocationError() && result.isPendingInventory()) {
             //pending inventory
             this.beerOrderManager.beerOrderAllocation(result.getBeerOrderDTO(), BeerOrderEventEnum.ALLOCATION_NO_INVENTORY);
         } else if (result.isAllocationError()) {

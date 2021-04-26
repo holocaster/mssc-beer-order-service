@@ -22,7 +22,7 @@ public class ValidateOrderResultListener {
     public void listenOrderResult(@Payload ValidateBeerOrderResult validateBeerOrderResult) {
         final UUID beerOrderId = validateBeerOrderResult.getOrderId();
 
-        log.debug("Validation result for id: {}" , beerOrderId);
+        log.debug("Validation result for id: {} is {}", beerOrderId, validateBeerOrderResult.getIsValid());
 
         this.beerOrderManager.processValidationResult(beerOrderId, validateBeerOrderResult.getIsValid());
     }

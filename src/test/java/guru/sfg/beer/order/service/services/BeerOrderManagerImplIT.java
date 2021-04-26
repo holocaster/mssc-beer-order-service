@@ -35,6 +35,8 @@ import static org.awaitility.Awaitility.await;
 public class BeerOrderManagerImplIT {
 
     public static final String FAIL_VALIDATION = "fail-validation";
+    public static final String FAIL_ALLOCATION = "fail-allocation";
+    public static final String PARTIAL_ALLOCATION = "partial-allocation";
 
     @Autowired
     BeerOrderManager beerOrderManager;
@@ -53,35 +55,68 @@ public class BeerOrderManagerImplIT {
 
     Customer testCustomer;
     UUID beerID = UUID.randomUUID();
+    BeerOrder beerOrder;
 
 
     @Value("${beer_upc_path_v1}")
     private String beerUpcPathV1;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws JsonProcessingException {
         this.testCustomer = this.customerRepository.save(Customer.builder()
                 .customerName("Test Customer")
                 .build());
-    }
-
-    @Test
-    void testFailedValidation() throws JsonProcessingException {
         BeerDTO beerDTO = BeerDTO.builder().id(beerID).upc("12345").build();
 
         this.wireMockServer.stubFor(WireMock.get(this.beerUpcPathV1).willReturn(
                 WireMock.okJson(this.objectMapper.writeValueAsString(beerDTO))));
 
-        BeerOrder beerOrder = this.createBeerOrder();
-        beerOrder.setCustomerRef(FAIL_VALIDATION);
+        this.beerOrder = this.createBeerOrder();
+    }
+
+    private void waitUntil(BeerOrderStatusEnum beerOrderStatusEnum) {
+        await().untilAsserted(() -> {
+            BeerOrder foundOrder = this.beerOrderRepository.findById(this.beerOrder.getId()).get();
+            Assertions.assertEquals(beerOrderStatusEnum, foundOrder.getOrderStatus());
+        });
+    }
+
+    @Test
+    void testFailedAllocation() {
+        this.beerOrder.setCustomerRef(FAIL_ALLOCATION);
 
         BeerOrder savedBeerOrder = this.beerOrderManager.newBeerOrder(beerOrder);
 
+        this.waitUntil(BeerOrderStatusEnum.ALLOCATION_EXCEPTION);
 
-        await().untilAsserted(() -> {
-            BeerOrder foundOrder = this.beerOrderRepository.findById(beerOrder.getId()).get();
-            Assertions.assertEquals(BeerOrderStatusEnum.VALIDATION_EXCEPTION, foundOrder.getOrderStatus());
-        });
+        savedBeerOrder = this.beerOrderRepository.findById(savedBeerOrder.getId()).get();
+
+        Assertions.assertNotNull(savedBeerOrder);
+        Assertions.assertEquals(BeerOrderStatusEnum.ALLOCATION_EXCEPTION, savedBeerOrder.getOrderStatus());
+    }
+
+    @Test
+    void testPartialAllocation() {
+
+        this.beerOrder.setCustomerRef(PARTIAL_ALLOCATION);
+
+        BeerOrder savedBeerOrder = this.beerOrderManager.newBeerOrder(beerOrder);
+
+        this.waitUntil(BeerOrderStatusEnum.PENDING_INVENTORY);
+
+        savedBeerOrder = this.beerOrderRepository.findById(savedBeerOrder.getId()).get();
+
+        Assertions.assertNotNull(savedBeerOrder);
+        Assertions.assertEquals(BeerOrderStatusEnum.PENDING_INVENTORY, savedBeerOrder.getOrderStatus());
+    }
+
+    @Test
+    void testFailedValidation() throws JsonProcessingException {
+        this.beerOrder.setCustomerRef(FAIL_VALIDATION);
+
+        BeerOrder savedBeerOrder = this.beerOrderManager.newBeerOrder(beerOrder);
+
+        this.waitUntil(BeerOrderStatusEnum.VALIDATION_EXCEPTION);
 
         savedBeerOrder = this.beerOrderRepository.findById(savedBeerOrder.getId()).get();
 
@@ -91,19 +126,11 @@ public class BeerOrderManagerImplIT {
 
     @Test
     void testNewToAllocated() throws JsonProcessingException {
-        BeerDTO beerDTO = BeerDTO.builder().id(beerID).upc("12345").build();
-
-        this.wireMockServer.stubFor(WireMock.get(this.beerUpcPathV1).willReturn(
-                WireMock.okJson(this.objectMapper.writeValueAsString(beerDTO))));
-
-        BeerOrder beerOrder = this.createBeerOrder();
+        this.beerOrder = this.createBeerOrder();
 
         BeerOrder savedBeerOrder = this.beerOrderManager.newBeerOrder(beerOrder);
 
-        await().untilAsserted(() -> {
-            BeerOrder foundOrder = this.beerOrderRepository.findById(beerOrder.getId()).get();
-            Assertions.assertEquals(BeerOrderStatusEnum.ALLOCATED, foundOrder.getOrderStatus());
-        });
+        this.waitUntil(BeerOrderStatusEnum.ALLOCATED);
 
         await().untilAsserted(() -> {
             BeerOrder foundOrder = this.beerOrderRepository.findById(beerOrder.getId()).get();
@@ -119,26 +146,15 @@ public class BeerOrderManagerImplIT {
 
     @Test
     void testNewToPickedUp() throws JsonProcessingException {
-        BeerDTO beerDTO = BeerDTO.builder().id(beerID).upc("12345").build();
-
-        this.wireMockServer.stubFor(WireMock.get(this.beerUpcPathV1).willReturn(
-                WireMock.okJson(this.objectMapper.writeValueAsString(beerDTO))));
-
-        BeerOrder beerOrder = this.createBeerOrder();
+        this.beerOrder = this.createBeerOrder();
 
         BeerOrder savedBeerOrder = this.beerOrderManager.newBeerOrder(beerOrder);
 
-        await().untilAsserted(() -> {
-            BeerOrder foundOrder = this.beerOrderRepository.findById(beerOrder.getId()).get();
-            Assertions.assertEquals(BeerOrderStatusEnum.ALLOCATED, foundOrder.getOrderStatus());
-        });
+        this.waitUntil(BeerOrderStatusEnum.ALLOCATED);
 
         this.beerOrderManager.beerOrderPickedUp(savedBeerOrder.getId());
 
-        await().untilAsserted(() -> {
-            BeerOrder foundOrder = this.beerOrderRepository.findById(beerOrder.getId()).get();
-            Assertions.assertEquals(BeerOrderStatusEnum.PICKED_UP, foundOrder.getOrderStatus());
-        });
+        this.waitUntil(BeerOrderStatusEnum.PICKED_UP);
 
         BeerOrder pickedUpOrder = this.beerOrderRepository.findById(beerOrder.getId()).get();
 
