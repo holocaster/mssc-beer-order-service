@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.jms.core.JmsTemplate;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -38,6 +39,10 @@ public class BeerOrderManagerImplIT {
     public static final String FAIL_ALLOCATION = "fail-allocation";
     public static final String PARTIAL_ALLOCATION = "partial-allocation";
 
+    Customer testCustomer;
+    UUID beerID = UUID.randomUUID();
+    BeerOrder beerOrder;
+
     @Autowired
     BeerOrderManager beerOrderManager;
 
@@ -53,10 +58,8 @@ public class BeerOrderManagerImplIT {
     @Autowired
     ObjectMapper objectMapper;
 
-    Customer testCustomer;
-    UUID beerID = UUID.randomUUID();
-    BeerOrder beerOrder;
-
+    @Autowired
+    private JmsTemplate jmsTemplate;
 
     @Value("${beer_upc_path_v1}")
     private String beerUpcPathV1;
@@ -91,6 +94,9 @@ public class BeerOrderManagerImplIT {
 
         savedBeerOrder = this.beerOrderRepository.findById(savedBeerOrder.getId()).get();
 
+//        final AllocateFailRequest allocateFailRequest = (AllocateFailRequest) this.jmsTemplate.receiveAndConvert(EventsConstants.ALLOCATE_FAIL_QUEUE);
+//        Assertions.assertNotNull(allocateFailRequest);
+//        Assertions.assertEquals(allocateFailRequest.getUuid(), savedBeerOrder.getId());
         Assertions.assertNotNull(savedBeerOrder);
         Assertions.assertEquals(BeerOrderStatusEnum.ALLOCATION_EXCEPTION, savedBeerOrder.getOrderStatus());
     }
