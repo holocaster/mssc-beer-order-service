@@ -1,6 +1,8 @@
 package guru.sfg.beer.order.service.services;
 
+import br.com.prcompany.beerevents.events.DeallocateOrderRequest;
 import br.com.prcompany.beerevents.model.enums.BeerOrderStatusEnum;
+import br.com.prcompany.beerevents.utils.EventsConstants;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.jenspiegsa.wiremockextension.WireMockExtension;
@@ -38,6 +40,8 @@ public class BeerOrderManagerImplIT {
     public static final String FAIL_VALIDATION = "fail-validation";
     public static final String FAIL_ALLOCATION = "fail-allocation";
     public static final String PARTIAL_ALLOCATION = "partial-allocation";
+    public static final String DONT_VALIDATE = "dont-validate";
+    public static final String DONT_ALLOCATE = "dont-allocate";
 
     Customer testCustomer;
     UUID beerID = UUID.randomUUID();
@@ -83,6 +87,48 @@ public class BeerOrderManagerImplIT {
             Assertions.assertEquals(beerOrderStatusEnum, foundOrder.getOrderStatus());
         });
     }
+
+    @Test
+    void testAllocatedToCancel() {
+        BeerOrder savedBeerOrder = this.beerOrderManager.newBeerOrder(beerOrder);
+
+        this.waitUntil(BeerOrderStatusEnum.ALLOCATED);
+
+        this.beerOrderManager.cancelOrder(savedBeerOrder.getId());
+
+        this.waitUntil(BeerOrderStatusEnum.CANCELED);
+
+        final DeallocateOrderRequest deallocateOrderRequest = (DeallocateOrderRequest) this.jmsTemplate.receiveAndConvert(EventsConstants.DEALLOCATE_ORDER_QUEUE);
+        Assertions.assertNotNull(deallocateOrderRequest);
+        Assertions.assertEquals(deallocateOrderRequest.getBeerOrderDTO().getId(), savedBeerOrder.getId());
+    }
+
+    @Test
+    void testValidationPendingToCancel() {
+        this.beerOrder.setCustomerRef(DONT_VALIDATE);
+
+        BeerOrder savedBeerOrder = this.beerOrderManager.newBeerOrder(beerOrder);
+
+        this.waitUntil(BeerOrderStatusEnum.VALIDATION_PENDING);
+
+        this.beerOrderManager.cancelOrder(savedBeerOrder.getId());
+
+        this.waitUntil(BeerOrderStatusEnum.CANCELED);
+    }
+
+    @Test
+    void testAllocationPendingToCancel() {
+        this.beerOrder.setCustomerRef(DONT_ALLOCATE);
+
+        BeerOrder savedBeerOrder = this.beerOrderManager.newBeerOrder(beerOrder);
+
+        this.waitUntil(BeerOrderStatusEnum.ALLOCATION_PENDING);
+
+        this.beerOrderManager.cancelOrder(savedBeerOrder.getId());
+
+        this.waitUntil(BeerOrderStatusEnum.CANCELED);
+    }
+
 
     @Test
     void testFailedAllocation() {

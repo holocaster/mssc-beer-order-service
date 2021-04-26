@@ -22,16 +22,22 @@ public class BeerOrderValidationListener {
     public void listen(Message msg) {
 
         boolean isValid = true;
+        boolean sendResponse = true;
 
         ValidateBeerOrderRequest request = (ValidateBeerOrderRequest) msg.getPayload();
 
         if (BeerOrderManagerImplIT.FAIL_VALIDATION.equals(request.getBeerOrderDTO().getCustomerRef())) {
             isValid = false;
+        } else if (BeerOrderManagerImplIT.DONT_VALIDATE.equals(request.getBeerOrderDTO().getCustomerRef())) {
+            sendResponse = false;
         }
 
-        this.jmsTemplate.convertAndSend(EventsConstants.VALIDATE_ORDER_RESULT_QUEUE,
-                ValidateBeerOrderResult.builder()
-                        .isValid(isValid)
-                        .orderId(request.getBeerOrderDTO().getId()).build());
+        if (sendResponse) {
+            this.jmsTemplate.convertAndSend(EventsConstants.VALIDATE_ORDER_RESULT_QUEUE,
+                    ValidateBeerOrderResult.builder()
+                            .isValid(isValid)
+                            .orderId(request.getBeerOrderDTO().getId()).build());
+
+        }
     }
 }

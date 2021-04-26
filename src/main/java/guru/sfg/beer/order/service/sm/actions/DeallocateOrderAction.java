@@ -33,7 +33,7 @@ public class DeallocateOrderAction implements Action<BeerOrderStatusEnum, BeerOr
         String id = (String) context.getMessageHeader(BeerOrderManagerImpl.ORDER_ID_HEADER);
 
         log.debug("Sending deallocation as jms message for {}", id);
-        BeerOrder beerOrder = this.beerOrderRepository.getOne(UUID.fromString(id));
+        BeerOrder beerOrder = this.beerOrderRepository.findById(UUID.fromString(id)).get();
 
         this.jmsTemplate.convertAndSend(EventsConstants.DEALLOCATE_ORDER_QUEUE, DeallocateOrderRequest.builder()
                 .beerOrderDTO(this.beerOrderMapper.beerOrderToEventDto(beerOrder)).build());
