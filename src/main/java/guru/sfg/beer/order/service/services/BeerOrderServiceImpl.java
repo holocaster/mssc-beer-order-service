@@ -17,14 +17,14 @@
 
 package guru.sfg.beer.order.service.services;
 
+import br.com.prcompany.beerevents.model.BeerOrderDTO;
+import br.com.prcompany.beerevents.model.BeerOrderPagedList;
 import br.com.prcompany.beerevents.model.enums.BeerOrderStatusEnum;
 import guru.sfg.beer.order.service.domain.BeerOrder;
 import guru.sfg.beer.order.service.domain.Customer;
 import guru.sfg.beer.order.service.repositories.BeerOrderRepository;
 import guru.sfg.beer.order.service.repositories.CustomerRepository;
 import guru.sfg.beer.order.service.web.mappers.BeerOrderMapper;
-import guru.sfg.beer.order.service.web.model.BeerOrderDto;
-import guru.sfg.beer.order.service.web.model.BeerOrderPagedList;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -69,7 +69,7 @@ public class BeerOrderServiceImpl implements BeerOrderService {
 
     @Transactional
     @Override
-    public BeerOrderDto placeOrder(UUID customerId, BeerOrderDto beerOrderDto) {
+    public BeerOrderDTO placeOrder(UUID customerId, BeerOrderDTO beerOrderDto) {
         Optional<Customer> customerOptional = customerRepository.findById(customerId);
 
         if (customerOptional.isPresent()) {
@@ -91,7 +91,7 @@ public class BeerOrderServiceImpl implements BeerOrderService {
     }
 
     @Override
-    public BeerOrderDto getOrderById(UUID customerId, UUID orderId) {
+    public BeerOrderDTO getOrderById(UUID customerId, UUID orderId) {
         return beerOrderMapper.beerOrderToDto(getOrder(customerId, orderId));
     }
 

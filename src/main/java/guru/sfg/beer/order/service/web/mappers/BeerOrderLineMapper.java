@@ -1,7 +1,7 @@
 package guru.sfg.beer.order.service.web.mappers;
 
+import br.com.prcompany.beerevents.model.BeerOrderLineDTO;
 import guru.sfg.beer.order.service.domain.BeerOrderLine;
-import guru.sfg.beer.order.service.web.model.BeerOrderLineDto;
 import org.mapstruct.DecoratedWith;
 import org.mapstruct.Mapper;
 
@@ -9,7 +9,7 @@ import org.mapstruct.Mapper;
 @DecoratedWith(BeerOrderLineMapperDecorator.class)
 public interface BeerOrderLineMapper {
 
-    BeerOrderLineDto beerOrderLineToDto(BeerOrderLine line);
+    BeerOrderLineDTO beerOrderLineToDto(BeerOrderLine line);
 
-    BeerOrderLine dtoToBeerOrderLine(BeerOrderLineDto dto);
+    BeerOrderLine dtoToBeerOrderLine(BeerOrderLineDTO dto);
 }

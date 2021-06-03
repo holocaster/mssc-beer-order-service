@@ -1,6 +1,6 @@
 package guru.sfg.beer.order.service.services.beer;
 
-import guru.sfg.beer.order.service.web.model.BeerDTO;
+import br.com.prcompany.beerevents.model.BeerDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;

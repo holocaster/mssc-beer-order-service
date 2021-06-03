@@ -1,6 +1,7 @@
 package guru.sfg.beer.order.service.services;
 
 import br.com.prcompany.beerevents.events.DeallocateOrderRequest;
+import br.com.prcompany.beerevents.model.BeerDTO;
 import br.com.prcompany.beerevents.model.enums.BeerOrderStatusEnum;
 import br.com.prcompany.beerevents.utils.EventsConstants;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -13,7 +14,6 @@ import guru.sfg.beer.order.service.domain.BeerOrderLine;
 import guru.sfg.beer.order.service.domain.Customer;
 import guru.sfg.beer.order.service.repositories.BeerOrderRepository;
 import guru.sfg.beer.order.service.repositories.CustomerRepository;
-import guru.sfg.beer.order.service.web.model.BeerDTO;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

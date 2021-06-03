@@ -19,7 +19,6 @@ package guru.sfg.beer.order.service.web.mappers;
 
 import br.com.prcompany.beerevents.model.BeerOrderDTO;
 import guru.sfg.beer.order.service.domain.BeerOrder;
-import guru.sfg.beer.order.service.web.model.BeerOrderDto;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -27,9 +26,9 @@ import org.mapstruct.Mapping;
 public interface BeerOrderMapper {
 
     @Mapping(target = "customerId", source = "customer.id")
-    BeerOrderDto beerOrderToDto(BeerOrder beerOrder);
+    BeerOrderDTO beerOrderToDto(BeerOrder beerOrder);
 
     BeerOrderDTO beerOrderToEventDto(BeerOrder beerOrder);
 
-    BeerOrder dtoToBeerOrder(BeerOrderDto dto);
+    BeerOrder dtoToBeerOrder(BeerOrderDTO dto);
 }

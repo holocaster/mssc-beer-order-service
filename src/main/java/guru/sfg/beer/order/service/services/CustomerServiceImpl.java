@@ -1,5 +1,6 @@
 package guru.sfg.beer.order.service.services;
 
+import br.com.prcompany.beerevents.model.CustomerDto;
 import guru.sfg.beer.order.service.domain.Customer;
 import guru.sfg.beer.order.service.repositories.CustomerRepository;
 import guru.sfg.beer.order.service.web.mappers.CustomerMapper;
@@ -11,6 +12,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -30,5 +32,16 @@ public class CustomerServiceImpl implements CustomerService {
                 PageRequest.of(all.getPageable().getPageNumber(),
                         all.getPageable().getPageSize()),
                 all.getTotalElements());
+    }
+
+    @Override
+    public CustomerDto findById(UUID customerId) {
+        Customer customer = this.customerRepository.findById(customerId).orElse(null);
+
+        if (customer != null) {
+            return this.customerMapper.customerToDto(customer);
+        }
+        return null;
+
     }
 }
