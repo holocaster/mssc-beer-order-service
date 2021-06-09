@@ -2,38 +2,44 @@ package guru.sfg.beer.order.service.services;
 
 import br.com.prcompany.beerevents.events.DeallocateOrderRequest;
 import br.com.prcompany.beerevents.model.BeerDTO;
+import br.com.prcompany.beerevents.model.BeerStyleEnum;
 import br.com.prcompany.beerevents.model.enums.BeerOrderStatusEnum;
 import br.com.prcompany.beerevents.utils.EventsConstants;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.jenspiegsa.wiremockextension.WireMockExtension;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
+import guru.sfg.beer.order.service.BeerOrderServiceApplication;
+import guru.sfg.beer.order.service.WireMockInitializer;
 import guru.sfg.beer.order.service.domain.BeerOrder;
 import guru.sfg.beer.order.service.domain.BeerOrderLine;
 import guru.sfg.beer.order.service.domain.Customer;
 import guru.sfg.beer.order.service.repositories.BeerOrderRepository;
 import guru.sfg.beer.order.service.repositories.CustomerRepository;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.jms.core.JmsTemplate;
+import org.springframework.test.context.ContextConfiguration;
 
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-import static com.github.jenspiegsa.wiremockextension.ManagedWireMockServer.with;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.awaitility.Awaitility.await;
 
-@ExtendWith(WireMockExtension.class)
+
+@ContextConfiguration(initializers = { WireMockInitializer.class }, classes = {
+        BeerOrderServiceApplication.class })
 @SpringBootTest
 public class BeerOrderManagerImplIT {
 
@@ -73,12 +79,18 @@ public class BeerOrderManagerImplIT {
         this.testCustomer = this.customerRepository.save(Customer.builder()
                 .customerName("Test Customer")
                 .build());
-        BeerDTO beerDTO = BeerDTO.builder().id(beerID).upc("12345").build();
+        BeerDTO beerDTO = BeerDTO.builder().id(beerID).upc("12345").beerStyle(BeerStyleEnum.ALE).build();
 
-        this.wireMockServer.stubFor(WireMock.get(this.beerUpcPathV1).willReturn(
+        this.wireMockServer.stubFor(WireMock.get(WireMock.urlEqualTo(this.beerUpcPathV1+ "null")).willReturn(
                 WireMock.okJson(this.objectMapper.writeValueAsString(beerDTO))));
 
         this.beerOrder = this.createBeerOrder();
+    }
+
+    @AfterEach
+    public void afterEach()
+    {
+        this.wireMockServer.resetAll();
     }
 
     private void waitUntil(BeerOrderStatusEnum beerOrderStatusEnum) {
@@ -226,15 +238,4 @@ public class BeerOrderManagerImplIT {
         return beerOrder;
     }
 
-    @TestConfiguration
-    static class RestTemplateBuilderProvider {
-
-        @Bean(destroyMethod = "stop")
-        public WireMockServer wireMockServer() {
-            WireMockServer server = with(wireMockConfig().port(8083));
-            server.start();
-            return server;
-        }
-    }
-
-}
+ }
