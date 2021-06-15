@@ -43,9 +43,9 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
         return savedBeerOrder;
     }
 
-    @Transactional
     @Override
     public void processValidationResult(UUID beerOrderId, Boolean isValid) {
+        this.awaitForStatus(beerOrderId, BeerOrderStatusEnum.VALIDATION_PENDING);
         this.beerOrderRepository.findById(beerOrderId).ifPresentOrElse(beerOrder -> {
             if (isValid) {
                 this.sendEvent(beerOrder, BeerOrderEventEnum.VALIDATION_PASSED);
@@ -138,7 +138,7 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
             if (!found.get()) {
                 try {
                     log.debug("Sleeping for retry");
-                    Thread.sleep(100);
+                    Thread.sleep(200);
                 } catch (Exception e) {
                     // do nothing
                 }
